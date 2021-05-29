@@ -4,7 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +18,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,13 +26,25 @@ public class MainActivity extends AppCompatActivity {
 
     static ArrayAdapter adapter;
 
+    SharedPreferences preferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        preferences = getApplicationContext().getSharedPreferences("com.taskfoundation.notesapp", Context.MODE_PRIVATE);
+
+        HashSet<String> set = (HashSet<String>) preferences.getStringSet("notes", null);
+
+        if (set == null) {
+            notes.add("Example Note");
+        } else {
+            notes = new ArrayList(set);
+        }
+
         ListView listView = findViewById(R.id.listView);
-        notes.add("Example Note");
+
 
         adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, notes);
 
@@ -49,6 +64,10 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("Yes", (dialog, which) -> {
                         notes.remove(position);
                         adapter.notifyDataSetChanged();
+
+                        HashSet<String> newSet = new HashSet<>(notes);
+                        preferences.edit().putStringSet("notes", newSet).apply();
+
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "It's done", Toast.LENGTH_SHORT).show();
                     })
